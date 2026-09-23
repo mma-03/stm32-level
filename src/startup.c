@@ -9,10 +9,12 @@ extern uint32_t _estack; // top of stack (RAM)
 
 int main(void);
 void Reset_Handler(void);
+void TIM2_IRQHandler(void);
 
-uint32_t *vector_table[] __attribute__((section(".isr_vector"))) = {
-    (uint32_t *)&_estack,
-    (uint32_t *)Reset_Handler
+uint32_t *vector_table[45] __attribute__((section(".isr_vector"))) = {
+    [0]  = (uint32_t *)&_estack,
+    [1]  = (uint32_t *)Reset_Handler,
+    [44] = (uint32_t *)TIM2_IRQHandler 
 };
 
 void Reset_Handler(void) {

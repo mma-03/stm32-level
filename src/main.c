@@ -14,6 +14,9 @@
 #define TIM2_ARR     (*(volatile uint32_t *)0x4000002C)
 #define TIM2_SR      (*(volatile uint32_t *)0x40000010)
 
+#define TIM2_DIER    (*(volatile uint32_t *)0x4000000C)
+#define NVIC_ISER0   (*(volatile uint32_t *)0xE000E100)
+
 void timer_init(void) {
     // enable TIM2 clock on APB1
     RCC_APB1ENR |= (1 << 0);
@@ -24,17 +27,30 @@ void timer_init(void) {
     // ARR so it wraps every 1000 ticks
     TIM2_ARR = 999;
 
+    // set UIE
+    TIM2_DIER |= (1 << 0);
+
+    // Set bit 28 in NVIC_ISER0
+    NVIC_ISER0 |= (1 << 28);
+
     // enable the counter
     TIM2_CR1 |= (1 << 0);
 }
 
+volatile uint32_t ms_ticks = 0;
+
+void TIM2_IRQHandler(void) {
+    // clear the UIF flag
+    TIM2_SR &= ~(1 << 0);
+    // increment ms_ticks
+    ms_ticks++;
+}
+
 void delay_ms(uint32_t ms) {
-    for(uint32_t i = 0; i < ms; i++) {
-        // wait until UIF is set (counter wrapped)
-        while (!(TIM2_SR & (1 << 0)));
-        // clear UIF
-        TIM2_SR &= ~(1 << 0);
-    }
+    // read the current tick count
+    uint32_t start = ms_ticks;
+    // wait until enough ticks have accumulated
+    while ((ms_ticks - start) < ms);
 }
 
 int main(void) {
