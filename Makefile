@@ -1,12 +1,15 @@
 TARGET = level
 CC = arm-none-eabi-gcc
 OBJCOPY = arm-none-eabi-objcopy
-CFLAGS = -mcpu=cortex-m4 -mthumb -Wall -ffreestanding -nostdlib -T linker.ld
+CFLAGS = -mcpu=cortex-m4 -mthumb -Wall -ffreestanding -nostdlib -T linker.ld -Iinclude
+
+SRCS = src/startup.c src/main.c src/timer.c src/uart.c
+HDRS = include/stm32f401.h include/timer.h include/uart.h
 
 all: $(TARGET).bin
 
-$(TARGET).elf: src/startup.c src/main.c linker.ld
-	$(CC) $(CFLAGS) src/startup.c src/main.c -o $(TARGET).elf
+$(TARGET).elf: $(SRCS) $(HDRS) linker.ld
+	$(CC) $(CFLAGS) $(SRCS) -o $(TARGET).elf
 
 $(TARGET).bin: $(TARGET).elf
 	$(OBJCOPY) -O binary $(TARGET).elf $(TARGET).bin
