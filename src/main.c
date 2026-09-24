@@ -17,6 +17,18 @@
 #define TIM2_DIER    (*(volatile uint32_t *)0x4000000C)
 #define NVIC_ISER0   (*(volatile uint32_t *)0xE000E100)
 
+// status register, offset = 0x00, TXE = bit 7
+#define USART2_SR    (*(volatile uint32_t *)0x40004400)
+// data register, offset = 0x04
+#define USART2_DR    (*(volatile uint32_t *)0x40004404)
+// baud rate register, offset = 0x08
+#define USART2_BRR   (*(volatile uint32_t *)0x40004408)
+// control register 1, offset = 0X0C
+// UE (USART Enable) = 13, TE (Transmitter Enable) = 3, RE (Receiver Enable) = 2
+#define USART2_CR1   (*(volatile uint32_t *)0x4000440C)
+// offset = 0x20, AF07 = 0111, pin 2 occupies bits 8 to 11
+#define GPIOA_AFRL   (*(volatile uint32_t *)0x40020020)
+
 void timer_init(void) {
     // enable TIM2 clock on APB1
     RCC_APB1ENR |= (1 << 0);
@@ -35,6 +47,44 @@ void timer_init(void) {
 
     // enable the counter
     TIM2_CR1 |= (1 << 0);
+}
+
+void uart_init(void) {
+    // enable USART2's clock
+    RCC_APB1ENR |= (1 << 17);
+
+    // enable GPIOA's clock
+    RCC_AHB1ENR |= (1 << 0);
+
+    // set PA2 to alternate function mode (10), bit 5 set, bit 4 clear
+    GPIOA_MODER &= ~(3 << 4); // clear bits 4 and 5
+    GPIOA_MODER |= (1 << 5);  // set bit 5, clear bit 4
+
+    // Select AF07 in AFRL
+    GPIOA_AFRL &= ~(0xF << 8); // clear bits  8-11
+    GPIOA_AFRL |= (7 << 8); // set bits 8-11: 0111
+
+    // write 139 into BRR
+    USART2_BRR = 139;
+
+    // set TE and UE in CR1
+    USART2_CR1 |= (1 << 13) | (1 << 3);
+}
+
+void uart_putc(char c) {
+    // spin until TXE (bit 7 of USART_SR) is set
+    while(!(USART2_SR & (1 << 7)));
+
+    // write c into USART2_DR
+    USART2_DR = c;
+}
+
+void uart_puts(const char *s) {
+    // walk string and send each character
+    for (int i = 0; s[i] != '\0'; i++) {
+        // send s[i]
+        uart_putc(s[i]);
+    }
 }
 
 volatile uint32_t ms_ticks = 0;
@@ -69,9 +119,11 @@ int main(void) {
     GPIOC_PUPDR |= (1 << 26);  // set to 01
 
     timer_init();
+    uart_init();
 
     while(1) {
+       uart_puts("Hello from STM32\r\n");
        GPIOA_ODR ^= (1 << 5);
-       delay_ms(500);
+       delay_ms(1000);
     }
 }
