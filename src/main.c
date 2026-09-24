@@ -87,6 +87,35 @@ void uart_puts(const char *s) {
     }
 }
 
+void uart_putint(int32_t n) {
+    // if n = 0, send '0' and return
+    if (n == 0) {
+        uart_putc('0');
+        return;
+    } else if (n < 0) {
+        uart_putc('-');
+        n = -n;
+    }
+
+    char buf[11]; // room for up to 10 digits
+    int count = 0; //how many digits are stored so far
+
+    //pull digits off the end and store them
+    while (n > 0) {
+        // store the character for the last digit in buf[count]
+        buf[count] = n % 10 + '0';
+        count++;
+        // remove the last digit from n
+        n = n/10;
+    }
+
+    // send the array back in reverse order
+    for (int i = count - 1; i >= 0; i--) {
+        //send buf[i]
+        uart_putc(buf[i]);
+    }
+}
+
 volatile uint32_t ms_ticks = 0;
 
 void TIM2_IRQHandler(void) {
@@ -121,9 +150,16 @@ int main(void) {
     timer_init();
     uart_init();
 
+    uint32_t start = ms_ticks;
+
     while(1) {
-       uart_puts("Hello from STM32\r\n");
+       uart_puts("ticks: ");
+       uart_putint(ms_ticks);
+       uart_puts("\r\n");
        GPIOA_ODR ^= (1 << 5);
-       delay_ms(1000);
+       //delay_ms(1000);
+
+       while ((ms_ticks - start) < 1000);
+       start += 1000;
     }
 }
