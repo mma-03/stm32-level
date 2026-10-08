@@ -2,6 +2,7 @@
 #include "stm32f401.h"
 #include "timer.h"
 #include "uart.h"
+#include "i2c.h"
 
 int main(void) {
     //Enable clocks for both GPIOA and GPIOC
@@ -20,6 +21,15 @@ int main(void) {
 
     timer_init();
     uart_init();
+    i2c_init();
+
+    uart_puts("CCR: ");
+    uart_putint(I2C1_CCR);
+    uart_puts("\r\n");
+    uart_puts("TRISE: ");
+    uart_putint(I2C1_TRISE);
+    uart_puts("\r\n");
+
 
     uint32_t start = millis();
 
