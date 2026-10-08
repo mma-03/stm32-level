@@ -27,5 +27,40 @@ void i2c_init(void) {
 
     // enable
     I2C1_CR1 |= (1 << 0);
+}
 
+void i2c_start(void) {
+    // set the start bit in CR1
+    I2C1_CR1 |= (1 << 8);
+    
+    // wait until SB is set in SR1
+    while(!(I2C1_SR1 & (1 << 0)));
+}
+
+int i2c_send_addr(uint8_t addr) {
+    // write address into DR
+    I2C1_DR = addr;
+
+    // waits for ADDR  or AF to be set
+    while(!(I2C1_SR1 & ((1 << 1) | (1 << 10))));
+
+    // if AF is set (sensor didn't answer)
+    if (I2C1_SR1 & (1 << 10)) {
+        // clear AF
+        I2C1_SR1 &= ~(1 << 10);
+
+        // send a STOP
+        i2c_stop();
+
+        return -1;
+
+    } else {
+        // clears ADDR by reading SR2
+        (void)I2C1_SR2;
+        return 0;
+    }
+}
+
+void i2c_stop(void) {
+    I2C1_CR1 |= (1 << 9);
 }

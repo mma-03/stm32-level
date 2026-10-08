@@ -23,12 +23,14 @@ int main(void) {
     uart_init();
     i2c_init();
 
-    uart_puts("CCR: ");
-    uart_putint(I2C1_CCR);
+    i2c_start();
+    int result = i2c_send_addr(0x69 << 1); // 0xD0: sensor's address (0x68), write (0)
+    uart_puts("ACK result: ");
+    uart_putint(result);
     uart_puts("\r\n");
-    uart_puts("TRISE: ");
-    uart_putint(I2C1_TRISE);
-    uart_puts("\r\n");
+    if (result == 0) {
+        i2c_stop();
+    }
 
 
     uint32_t start = millis();
