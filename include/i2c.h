@@ -11,6 +11,11 @@ void i2c_start(void);
 // send address byte
 int i2c_send_addr(uint8_t addr);
 
+// write data byte
+int i2c_write_byte(uint8_t data);
+
+uint8_t i2c_read_byte(void);
+
 void i2c_stop(void);
 
 #endif

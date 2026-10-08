@@ -57,8 +57,40 @@ int i2c_send_addr(uint8_t addr) {
     } else {
         // clears ADDR by reading SR2
         (void)I2C1_SR2;
+
         return 0;
     }
+}
+
+int i2c_write_byte(uint8_t data) {
+    // write data into DR
+    I2C1_DR = data;
+
+    // wait until BTF or AF is set
+    while(!(I2C1_SR1 & ((1 << 2) | (1 << 10))));
+    // if AF is set:
+    if (I2C1_SR1 & (1 << 10)) {
+        // clear AF
+        I2C1_SR1 &= ~(1 << 10);
+
+        // send a STOP
+        i2c_stop();
+
+        return -1;
+    } else {
+        return 0;
+    }
+}
+
+uint8_t i2c_read_byte(void) {
+    // call stop right adter ADDR is cleared 
+    i2c_stop();
+
+    // wait for RxNe
+    while(!(I2C1_SR1 & (1 << 6)));
+
+    //return DR
+    return I2C1_DR;
 }
 
 void i2c_stop(void) {

@@ -23,15 +23,27 @@ int main(void) {
     uart_init();
     i2c_init();
 
+    int result;
+    uint8_t value = 0;
+
     i2c_start();
-    int result = i2c_send_addr(0x69 << 1); // 0xD0: sensor's address (0x68), write (0)
-    uart_puts("ACK result: ");
-    uart_putint(result);
-    uart_puts("\r\n");
+    result = i2c_send_addr(0x68 << 1); // address + write
     if (result == 0) {
-        i2c_stop();
+        result = i2c_write_byte(0x75); // "I want register 0x75"
+    }
+    if (result == 0) {
+        i2c_start(); // repeated start
+        result = i2c_send_addr((0x68 << 1) | 1); // address + read
+    }
+    if (result == 0) {
+        value = i2c_read_byte();
     }
 
+    uart_puts("result: ");
+    uart_putint(result);
+    uart_puts(" WHO_AM_I: ");
+    uart_putint(value);
+    uart_puts("\r\n");
 
     uint32_t start = millis();
 
