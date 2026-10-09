@@ -32,23 +32,28 @@ int main(void) {
 
     uint32_t start = millis();
 
+    int print_count = 0;
+
     while(1) {
         int16_t ax, ay, az;
         float pitch, roll;
 
         if (mpu_read_accel(&ax, &ay, &az) == 0){
-            tilt_from_accel(ax, ay, az, &pitch, &roll);
-
-            uart_puts("pitch: ");
-            uart_putint((int32_t)(pitch * 10.0f));
-            uart_puts(" roll: ");
-            uart_putint((int32_t)(roll * 10.0f));
-            uart_puts("\r\n");
+            tilt_update(ax, ay, az, &pitch, &roll);
+            print_count++;
+            if (print_count >= 5) {
+                print_count = 0;
+                uart_puts("pitch: ");
+                uart_putint((int32_t)(pitch * 10.0f));
+                uart_puts(" roll: ");
+                uart_putint((int32_t)(roll * 10.0f));
+                uart_puts("\r\n");
+            } 
         } else {
             uart_puts("read error\r\n");
         }
 
-        while((millis() - start) < 100);
-        start += 100;
+        while((millis() - start) < 20);
+        start += 20;
     }
 }
