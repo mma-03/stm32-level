@@ -33,5 +33,7 @@ SECTIONS
         _ebss = .;
     } > RAM
 
+    end = .;
+
     _estack = ORIGIN(RAM) + LENGTH(RAM);
 }

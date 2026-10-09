@@ -1,9 +1,11 @@
 #include <stdint.h>
+#include <math.h>
 #include "stm32f401.h"
 #include "timer.h"
 #include "uart.h"
 #include "i2c.h"
 #include "mpu6500.h"
+#include "tilt.h"
 
 int main(void) {
     //Enable clocks for both GPIOA and GPIOC
@@ -32,14 +34,15 @@ int main(void) {
 
     while(1) {
         int16_t ax, ay, az;
+        float pitch, roll;
 
         if (mpu_read_accel(&ax, &ay, &az) == 0){
-            uart_puts("x: ");
-            uart_putint(ax);
-            uart_puts(" y: ");
-            uart_putint(ay);
-            uart_puts(" z: ");
-            uart_putint(az);
+            tilt_from_accel(ax, ay, az, &pitch, &roll);
+
+            uart_puts("pitch: ");
+            uart_putint((int32_t)(pitch * 10.0f));
+            uart_puts(" roll: ");
+            uart_putint((int32_t)(roll * 10.0f));
             uart_puts("\r\n");
         } else {
             uart_puts("read error\r\n");

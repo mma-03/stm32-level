@@ -18,6 +18,12 @@ uint32_t *vector_table[45] __attribute__((section(".isr_vector"))) = {
 };
 
 void Reset_Handler(void) {
+    // enable the FPU: full access to coprocessors CP10 and CP11
+    *(volatile uint32_t *)0xE000ED88 |= (0xF << 20);
+    __asm volatile ("dsb");
+    __asm volatile ("isb");
+
+
     // 1. Copy data from FLASH to RAM
     // two walking pointers, source and destination
     // loop until destination reaches the end
