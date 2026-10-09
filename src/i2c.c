@@ -93,6 +93,60 @@ uint8_t i2c_read_byte(void) {
     return I2C1_DR;
 }
 
+int i2c_read_reg(uint8_t dev, uint8_t reg, uint8_t *value) {
+    // start
+    i2c_start();
+
+    // send the addres with the write bit
+    // if it returns -1, return -1
+    if (i2c_send_addr(dev << 1) != 0) {
+        return -1;
+    }
+    
+    // send the register number, reg
+    if (i2c_write_byte(reg) != 0) {
+        return -1;
+    }
+
+    // send a repeated START
+    i2c_start();
+
+    // send the address with the read bit
+    if (i2c_send_addr((dev << 1) | 1) != 0) {
+        return -1;
+    }
+
+    // read the byte, and store it where value points
+    *value = i2c_read_byte();
+
+    return 0;
+}
+
+int i2c_write_reg(uint8_t dev, uint8_t reg, uint8_t value){
+    // send a START
+    i2c_start();
+
+    // send the address with the WRITE bit
+    if (i2c_send_addr(dev << 1) != 0) {
+        return -1;
+    }
+
+    // send the register number, reg
+    if(i2c_write_byte(reg) != 0) {
+        return -1;
+    }
+
+    // send the value
+    if(i2c_write_byte(value) != 0) {
+        return -1;
+    }
+
+    i2c_stop();
+
+    return 0;
+}
+
+
 void i2c_stop(void) {
     I2C1_CR1 |= (1 << 9);
 }
