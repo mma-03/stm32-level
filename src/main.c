@@ -32,6 +32,8 @@ int main(void) {
 
     uint32_t start = millis();
 
+    int was_pressed = 0;
+
     int print_count = 0;
 
     while(1) {
@@ -40,6 +42,24 @@ int main(void) {
 
         if (mpu_read_accel(&ax, &ay, &az) == 0){
             tilt_update(ax, ay, az, &pitch, &roll);
+
+            int pressed = !(GPIOC_IDR & (1 << 13)); // 1 if pressed, 0 if not
+
+            if (pressed && !was_pressed) {
+                tilt_zero();
+                uart_puts("zeroed\r\n");
+            }
+            was_pressed = pressed;
+
+            // light LED if on flat surface
+            if(fabsf(pitch) < 0.5f && fabsf(roll) < 0.5f) {
+                //turn LED on
+                GPIOA_ODR |= (1 << 5);
+            } else {
+                // turn LED off
+                GPIOA_ODR &= ~(1 << 5);
+            }
+
             print_count++;
             if (print_count >= 5) {
                 print_count = 0;
