@@ -3,6 +3,7 @@
 #include "timer.h"
 #include "uart.h"
 #include "i2c.h"
+#include "mpu6500.h"
 
 int main(void) {
     //Enable clocks for both GPIOA and GPIOC
@@ -23,15 +24,28 @@ int main(void) {
     uart_init();
     i2c_init();
 
+    if (mpu_init() != 0) {
+        uart_puts("MPU not found\r\n");
+    }
+
     uint32_t start = millis();
 
     while(1) {
-       uart_puts("ticks: ");
-       uart_putint(millis());
-       uart_puts("\r\n");
-       GPIOA_ODR ^= (1 << 5);
+        int16_t ax, ay, az;
 
-       while ((millis() - start) < 1000);
-       start += 1000;
+        if (mpu_read_accel(&ax, &ay, &az) == 0){
+            uart_puts("x: ");
+            uart_putint(ax);
+            uart_puts(" y: ");
+            uart_putint(ay);
+            uart_puts(" z: ");
+            uart_putint(az);
+            uart_puts("\r\n");
+        } else {
+            uart_puts("read error\r\n");
+        }
+
+        while((millis() - start) < 100);
+        start += 100;
     }
 }
